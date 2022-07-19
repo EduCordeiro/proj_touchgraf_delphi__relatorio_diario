@@ -1,0 +1,9 @@
+*~*
+*.dcu
+*.ddp
+*.log
+*.LOG
+*.bak
+/ARQUIVOS_TEMPORARIOS
+/ARQUIVO_TESTE
+/OUTROS_RECURSOS

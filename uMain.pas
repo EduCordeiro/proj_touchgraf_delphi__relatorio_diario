@@ -128,8 +128,8 @@ type
     procedure AtualizarQtdeArquivosMarcadosReverter();
 
 
-    procedure refreshListaDeLotesMovimentoFRM();
-    procedure getListaDeLotesMovimentoFRM();
+    procedure FRMrefreshListaDeLotesMovimento();
+    procedure FRMgetListaDeLotesMovimento();
 
 
   public
@@ -254,6 +254,7 @@ begin
 
       objCore.objParametrosDeEntrada.HORA_FIM_PROCESSO                             := Now;
 
+      FRMrefreshListaDeLotesMovimento();
       FRM_ATUALIZA_ARQUIVOS_PROCESADOS();
 
       LimparSelecao;
@@ -296,14 +297,15 @@ begin
       // 0 ---------------0
       // | ENVIA O E-MAIL |
       // 0 ---------------0
-      objCore.EnviarEmail('FIM DE PROCESSAMENTO !!!', sMSG + #13 + #13 + 'SEGUE LOG EM ANEXO.' + #13 + #13
-        + 'DETALHES DE LOGIN' + #13
-        + '=================' + #13
-        + 'HOSTNAME.......................: ' + objCore.objParametrosDeEntrada.HOSTNAME + #13
-        + 'USUARIO LOGADO.................: ' + objCore.objParametrosDeEntrada.USUARIO_LOGADO_APP + #13
-        + 'USUARIO SO.....................: ' + objCore.objParametrosDeEntrada.USUARIO_SO + #13
-        + 'LOTE LOGIN.....................: ' + objCore.objParametrosDeEntrada.APP_LOGAR_LOTE + #13
-        + 'IP.............................: ' + objCore.objParametrosDeEntrada.IP);
+      IF StrToBool(objCore.objParametrosDeEntrada.ENVIAR_EMAIL) THEN
+        objCore.EnviarEmail('FIM DE PROCESSAMENTO !!!', sMSG + #13 + #13 + 'SEGUE LOG EM ANEXO.' + #13 + #13
+          + 'DETALHES DE LOGIN' + #13
+          + '=================' + #13
+          + 'HOSTNAME.......................: ' + objCore.objParametrosDeEntrada.HOSTNAME + #13
+          + 'USUARIO LOGADO.................: ' + objCore.objParametrosDeEntrada.USUARIO_LOGADO_APP + #13
+          + 'USUARIO SO.....................: ' + objCore.objParametrosDeEntrada.USUARIO_SO + #13
+          + 'LOTE LOGIN.....................: ' + objCore.objParametrosDeEntrada.APP_LOGAR_LOTE + #13
+          + 'IP.............................: ' + objCore.objParametrosDeEntrada.IP);
 
     end;
 
@@ -437,7 +439,8 @@ begin
           objCore.getListaDeTabelasTrackLine();
 
           // get lista de lotes do movimento
-          getListaDeLotesMovimentoFRM();
+          //FRMgetListaDeLotesMovimento();
+          FRMrefreshListaDeLotesMovimento();
 
           Application.Title := StringReplace(ExtractFileName(Application.ExeName), '.exe', '', [rfReplaceAll, rfIgnoreCase]);
 
@@ -909,6 +912,7 @@ end;
 procedure TfrmMain.btnReverterArquivoClick(Sender: TObject);
 begin
   FRM_REVERTER_ARQUIVOS();
+  FRMrefreshListaDeLotesMovimento();
   FRM_ATUALIZA_ARQUIVOS_PROCESADOS();
 
   LimparSelecao;
@@ -983,15 +987,15 @@ end;
 
 procedure TfrmMain.dtpMovimentoChange(Sender: TObject);
 begin
-  refreshListaDeLotesMovimentoFRM();
+  FRMrefreshListaDeLotesMovimento();
 end;
 
 procedure TfrmMain.dtpMovimentoFinalChange(Sender: TObject);
 begin
-  refreshListaDeLotesMovimentoFRM();
+  FRMrefreshListaDeLotesMovimento();
 end;
 
-procedure TfrmMain.refreshListaDeLotesMovimentoFRM();
+procedure TfrmMain.FRMrefreshListaDeLotesMovimento();
 begin
 
   objCore.objParametrosDeEntrada.MOVIMENTO            := dtpMovimento.DateTime;
@@ -1002,7 +1006,7 @@ begin
     lblAlerta.Visible := true;
 
 
-  getListaDeLotesMovimentoFRM();
+  FRMgetListaDeLotesMovimento();
 
   //lstLotes.Clear;
   //objCore.getListaDeLotesMovimento();
@@ -1010,7 +1014,7 @@ begin
 
 end;
 
-procedure TfrmMain.getListaDeLotesMovimentoFRM();
+procedure TfrmMain.FRMgetListaDeLotesMovimento();
 var
   iContListaDeLotesMovimento : Integer;
   iTotalDeLotesMovimento     : Integer;
@@ -1027,16 +1031,11 @@ begin
 
     sLinha := objCore.objParametrosDeEntrada.STL_LISTA_LOTES.Strings[iContListaDeLotesMovimento];
 
-
-
-        if ((not objCore.ArquivoExieteTabelaTrackLine(sLinha) ) AND (not objCore.ArquivoExieteTabelaTrackLineHistory(sLinha)))
-          or (chkTeste.Checked) then
-          if (lstLotes.Items.IndexOf(sLinha) = -1) and (sLinha <> '') then
-            lstLotes.Items.Add(sLinha);
-
-
-
-
+    if ((not objCore.ArquivoExieteTabelaTrackLine(sLinha) ) AND (not objCore.ArquivoExieteTabelaTrackLineHistory(sLinha)))
+      or (chkTeste.Checked) then
+      if (lstLotes.Items.IndexOf(sLinha) = -1) and (sLinha <> '') then
+        lstLotes.Items.Add(sLinha);
+        
   end;
 
 end;

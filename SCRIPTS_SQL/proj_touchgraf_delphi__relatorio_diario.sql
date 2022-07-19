@@ -2,8 +2,7 @@ CREATE DATABASE IF NOT EXISTS proj_touchgraf_delphi__relatorio_diario;
 
 DROP TABLE IF EXISTS       proj_touchgraf_delphi__relatorio_diario.processamento;
 CREATE TABLE IF NOT EXISTS proj_touchgraf_delphi__relatorio_diario.processamento (
-   SEQUENCIA                  INTEGER
-  
+   SEQUENCIA                  INTEGER  
   ,N_CONTRATO                 varchar(016) NOT NULL
   ,N_CHASSI                   varchar(020) NOT NULL
   ,CPF_CNPJ_CLIENTE           varchar(014) NOT NULL
@@ -20,7 +19,8 @@ CREATE TABLE IF NOT EXISTS proj_touchgraf_delphi__relatorio_diario.processamento
   ,CEP                        varchar(008) NOT NULL
   ,ARQUIVO_ORIGEM_BANCO       varchar(013) NOT NULL
   ,DTA_REFERENCIA             varchar(008) NOT NULL
-  ,PRIMARY KEY(SEQUENCIA)
+  ,PRIMARY KEY(SEQUENCIA),
+  KEY IDX_CHAVE2 (ARQUIVO_ORIGEM_BANCO, DTA_REFERENCIA)
 );
 
 DROP TABLE IF EXISTS       proj_touchgraf_delphi__relatorio_diario.processamento2;
@@ -123,7 +123,8 @@ CREATE TABLE IF NOT EXISTS proj_touchgraf_delphi__relatorio_diario.track_line (
   TIPO_DOCUMENTO         VARCHAR(10) NOT NULL,
   LINHA                  TEXT,
   LINHA_REL              TEXT,
-  PRIMARY KEY  (ARQUIVO_ZIP,ARQUIVO_AFP,ARQUIVO_TXT,SEQUENCIA_REGISTRO)
+  PRIMARY KEY  (ARQUIVO_ZIP,ARQUIVO_AFP,ARQUIVO_TXT,SEQUENCIA_REGISTRO),
+  KEY IDX_CHAVE2 (LOTE, DATA_POSTAGEM, TIPO_DOCUMENTO)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 CREATE TABLE IF NOT EXISTS proj_touchgraf_delphi__relatorio_diario.track_line_history (
@@ -153,5 +154,6 @@ CREATE TABLE IF NOT EXISTS proj_touchgraf_delphi__relatorio_diario.track_line_hi
   TIPO_DOCUMENTO         VARCHAR(10) NOT NULL,
   LINHA                  TEXT,  
   LINHA_REL              TEXT,
-  PRIMARY KEY  (ARQUIVO_ZIP,ARQUIVO_AFP,ARQUIVO_TXT,SEQUENCIA_REGISTRO)
+  PRIMARY KEY  (ARQUIVO_ZIP,ARQUIVO_AFP,ARQUIVO_TXT,SEQUENCIA_REGISTRO),
+  KEY IDX_CHAVE2 (LOTE, DATA_POSTAGEM, TIPO_DOCUMENTO)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;

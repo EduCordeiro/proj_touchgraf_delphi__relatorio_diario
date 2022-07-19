@@ -985,6 +985,8 @@ var
   sPostagem                         : string;
   sTipoDocumento                    : string;
   sTabelaTrack                      : string;
+  sARQUIVO_ORIGEM_BANCO              : string;
+  sDTA_REFERENCIA                    : string;
 
   iContLotes                        : Integer;
   iContArquivos                     : Integer;
@@ -1066,9 +1068,6 @@ begin
     sTipoDocumento := Trim(StringReplace(sTipoDocumento, 'TIPO DOCUMENTO: ', '', [rfReplaceAll, rfIgnoreCase]));
     sTabelaTrack   := Trim(StringReplace(sTabelaTrack,   'TBL: '           , '', [rfReplaceAll, rfIgnoreCase]));
 
-    if sTipoDocumento = 'CARNE' then
-    begin
-
       //=======================================================================================================================================
       //  PEGA O NOME DO ARQUIVO ZIP NA TABELA DE TRACK LINE
       //=======================================================================================================================================
@@ -1078,604 +1077,186 @@ begin
                 + '   AND TIPO_DOCUMENTO = "' + sTipoDocumento + '" ';
       objConexao.Executar_SQL(__queryMySQL_processamento__, sComando, 2);
 
-      IF __queryMySQL_processamento__.RecordCount > 0 THEN
-      Begin
+    WHILE NOT __queryMySQL_processamento__.Eof DO
+    BEGIN
 
-        sArquivoTXT  := 'RELATORIO_' + Trim(copy(__queryMySQL_processamento__.FieldByName('LINHA').AsString, 2034, 013)) + '_' + __queryMySQL_processamento__.FieldByName('MOVIMENTO').AsString + '.CSV';
+      iContLinas := iContLinas + 1;
 
-        AssignFile(txtSaida, sPathMovimentoArquivos + sArquivoTXT);
-        Rewrite(txtSaida);
+      //=================================================================================================================================================================
+      //  INSERE NA TABELA PROCESSAMENTO
+      //=================================================================================================================================================================
 
-        sLinha := 'N_CONTRATO;N_CHASSI;CPF/CNPJ CLIENTE;NOME CLIENTE;VALOR CARNE;QTD PARCELAS;DT VENCIMENTO;STATUS;CODIGO POSTAGEM CORREIOS;ENDEREÇO;BAIRRO;CIDADE;UF;CEP;ARQUIVO;DTA_REFERENCIA';
-        writeln(txtSaida, sLinha);
+      if sTipoDocumento = 'CARNE' then
+      begin
 
-        WHILE NOT __queryMySQL_processamento__.Eof DO
-        BEGIN
+        sComando := 'INSERT INTO  ' + objParametrosDeEntrada.TABELA_PROCESSAMENTO
+                   + ' (SEQUENCIA'
+                   + ' ,N_CONTRATO'
+                   + ' ,N_CHASSI'
+                   + ' ,CPF_CNPJ_CLIENTE'
+                   + ' ,NOME_CLIENTE'
+                   + ' ,VALOR_CARNE'
+                   + ' ,QTD_PARCELAS'
+                   + ' ,DT_VENCIMENTO'
+                   + ' ,STATUS'
+                   + ' ,CODIGO_POSTAGEM_CORREIOS'
+                   + ' ,ENDERECO'
+                   + ' ,BAIRRO'
+                   + ' ,CIDADE'
+                   + ' ,UF'
+                   + ' ,CEP'
+                   + ' ,ARQUIVO_ORIGEM_BANCO'
+                   + ' ,DTA_REFERENCIA'
+                   + ') '
+                   + ' VALUES("' + IntToStr(iContLinas)
+                         + '","' + Trim(copy(__queryMySQL_processamento__.FieldByName('LINHA').AsString, 0020, 016))
+                         + '","' + Trim(copy(__queryMySQL_processamento__.FieldByName('LINHA').AsString, 2168, 020))
+                         + '","' + Trim(copy(__queryMySQL_processamento__.FieldByName('LINHA').AsString, 0594, 014))
+                         + '","' + Trim(copy(__queryMySQL_processamento__.FieldByName('LINHA').AsString, 0101, 030))
+                         + '","' + Trim(copy(__queryMySQL_processamento__.FieldByName('LINHA').AsString, 1814, 015))
+                         + '","' + Trim(copy(__queryMySQL_processamento__.FieldByName('LINHA').AsString, 0500, 003))
+                         + '","' + Trim(copy(__queryMySQL_processamento__.FieldByName('LINHA').AsString, 0047, 008))
+                         + '","' + 'status'
+                         + '","' + Trim(copy(__queryMySQL_processamento__.FieldByName('LINHA').AsString, 1899, 034))
+                         + '","' + Trim(copy(__queryMySQL_processamento__.FieldByName('LINHA').AsString, 0713, 060))
+                         + '","' + Trim(copy(__queryMySQL_processamento__.FieldByName('LINHA').AsString, 0808, 030))
+                         + '","' + Trim(copy(__queryMySQL_processamento__.FieldByName('LINHA').AsString, 0838, 030))
+                         + '","' + Trim(copy(__queryMySQL_processamento__.FieldByName('LINHA').AsString, 0868, 002))
+                         + '","' + Trim(copy(__queryMySQL_processamento__.FieldByName('LINHA').AsString, 0870, 008))
+                         + '","' + Trim(copy(__queryMySQL_processamento__.FieldByName('LINHA').AsString, 2034, 013))
+                         + '","' + __queryMySQL_processamento__.FieldByName('MOVIMENTO').AsString
+                         + '")';
+        objConexao.Executar_SQL(__queryMySQL_Insert_, sComando, 1);
 
-            iContLinas := iContLinas + 1;
-
-          sLinha := Trim(copy(__queryMySQL_processamento__.FieldByName('LINHA').AsString, 0020, 016))
-            + ';' + Trim(copy(__queryMySQL_processamento__.FieldByName('LINHA').AsString, 2168, 020))
-            + ';' + Trim(copy(__queryMySQL_processamento__.FieldByName('LINHA').AsString, 0594, 014))
-            + ';' + Trim(copy(__queryMySQL_processamento__.FieldByName('LINHA').AsString, 0101, 030))
-            + ';' + Trim(copy(__queryMySQL_processamento__.FieldByName('LINHA').AsString, 1814, 015))
-            + ';' + Trim(copy(__queryMySQL_processamento__.FieldByName('LINHA').AsString, 0500, 003))
-            + ';' + Trim(copy(__queryMySQL_processamento__.FieldByName('LINHA').AsString, 0047, 008))
-            + ';' + 'status'
-            + ';' + Trim(copy(__queryMySQL_processamento__.FieldByName('LINHA').AsString, 1899, 034))
-            + ';' + Trim(copy(__queryMySQL_processamento__.FieldByName('LINHA').AsString, 0713, 060))
-            + ';' + Trim(copy(__queryMySQL_processamento__.FieldByName('LINHA').AsString, 0808, 030))
-            + ';' + Trim(copy(__queryMySQL_processamento__.FieldByName('LINHA').AsString, 0838, 030))
-            + ';' + Trim(copy(__queryMySQL_processamento__.FieldByName('LINHA').AsString, 0868, 002))
-            + ';' + Trim(copy(__queryMySQL_processamento__.FieldByName('LINHA').AsString, 0870, 008))
-            + ';' + Trim(copy(__queryMySQL_processamento__.FieldByName('LINHA').AsString, 2034, 013))
-            + ';' + __queryMySQL_processamento__.FieldByName('MOVIMENTO').AsString
-            ;
-          //=================================================================================================================================================================
-          //  INSERE NA TABELA PROCESSAMENTO
-          //=================================================================================================================================================================
-          sComando := 'INSERT INTO  ' + objParametrosDeEntrada.TABELA_PROCESSAMENTO
-                     + ' (SEQUENCIA'
-                     + ' ,N_CONTRATO'
-                     + ' ,N_CHASSI'
-                     + ' ,CPF_CNPJ_CLIENTE'
-                     + ' ,NOME_CLIENTE'
-                     + ' ,VALOR_CARNE'
-                     + ' ,QTD_PARCELAS'
-                     + ' ,DT_VENCIMENTO'
-                     + ' ,STATUS'
-                     + ' ,CODIGO_POSTAGEM_CORREIOS'
-                     + ' ,ENDERECO'
-                     + ' ,BAIRRO'
-                     + ' ,CIDADE'
-                     + ' ,UF'
-                     + ' ,CEP'
-                     + ' ,ARQUIVO_ORIGEM_BANCO'
-                     + ' ,DTA_REFERENCIA'
+        //=================================================================================================================================================================
+        //  INSERE NA TABELA TRACK LINE
+        //=================================================================================================================================================================
+        if not objParametrosDeEntrada.TESTE then
+        begin
+          sComando := 'INSERT INTO  ' + objParametrosDeEntrada.TABELA_TRACK_LINE
+                    + ' (ARQUIVO_ZIP'
+                     + ',ARQUIVO_AFP'
+                     + ',ARQUIVO_TXT'
+                     + ',SEQUENCIA_REGISTRO'
+                     + ',TIMESTAMP'
+                     + ',LOTE_PROCESSAMENTO'
+                     + ',MOVIMENTO'
+                     + ',ACABAMENTO'
+                     + ',PAGINAS'
+                     + ',FOLHAS'
+                     + ',OF_FORMULARIO'
+                     + ',DATA_POSTAGEM'
+                     + ',LOTE'
+                     + ',CIF'
+                     + ',PESO'
+                     + ',DIRECAO'
+                     + ',CATEGORIA'
+                     + ',PORTE'
+                     + ',STATUS_REGISTRO'
+                     + ',PAPEL'
+                     + ',TIPO_DOCUMENTO'
+                     + ',LINHA'
+                     + ',LINHA_REL'
                      + ') '
-                     + ' VALUES("' + IntToStr(iContLinas)
-                           + '","' + Trim(copy(__queryMySQL_processamento__.FieldByName('LINHA').AsString, 0020, 016))
-                           + '","' + Trim(copy(__queryMySQL_processamento__.FieldByName('LINHA').AsString, 2168, 020))
-                           + '","' + Trim(copy(__queryMySQL_processamento__.FieldByName('LINHA').AsString, 0594, 014))
-                           + '","' + Trim(copy(__queryMySQL_processamento__.FieldByName('LINHA').AsString, 0101, 030))
-                           + '","' + Trim(copy(__queryMySQL_processamento__.FieldByName('LINHA').AsString, 1814, 015))
-                           + '","' + Trim(copy(__queryMySQL_processamento__.FieldByName('LINHA').AsString, 0500, 003))
-                           + '","' + Trim(copy(__queryMySQL_processamento__.FieldByName('LINHA').AsString, 0047, 008))
-                           + '","' + 'status'
-                           + '","' + Trim(copy(__queryMySQL_processamento__.FieldByName('LINHA').AsString, 1899, 034))
-                           + '","' + Trim(copy(__queryMySQL_processamento__.FieldByName('LINHA').AsString, 0713, 060))
-                           + '","' + Trim(copy(__queryMySQL_processamento__.FieldByName('LINHA').AsString, 0808, 030))
-                           + '","' + Trim(copy(__queryMySQL_processamento__.FieldByName('LINHA').AsString, 0838, 030))
-                           + '","' + Trim(copy(__queryMySQL_processamento__.FieldByName('LINHA').AsString, 0868, 002))
-                           + '","' + Trim(copy(__queryMySQL_processamento__.FieldByName('LINHA').AsString, 0870, 008))
-                           + '","' + Trim(copy(__queryMySQL_processamento__.FieldByName('LINHA').AsString, 2034, 013))
-                           + '","' + __queryMySQL_processamento__.FieldByName('MOVIMENTO').AsString
-                           + '")';
+                     + ' VALUES("'
+                     +         __queryMySQL_processamento__.FieldByName('ARQUIVO_ZIP').AsString
+                     + '","' + __queryMySQL_processamento__.FieldByName('ARQUIVO_AFP').AsString
+                     + '","' + __queryMySQL_processamento__.FieldByName('ARQUIVO_TXT').AsString
+                     + '","' + __queryMySQL_processamento__.FieldByName('SEQUENCIA_REGISTRO').AsString
+                     + '","' + FormatDateTime('YYYY-MM-DD hh:mm:ss', objParametrosDeEntrada.TIMESTAMP)
+                     + '","' + __queryMySQL_processamento__.FieldByName('LOTE_PROCESSAMENTO').AsString
+                     + '","' + __queryMySQL_processamento__.FieldByName('MOVIMENTO').AsString
+                     + '","' + __queryMySQL_processamento__.FieldByName('ACABAMENTO').AsString
+                     + '","' + __queryMySQL_processamento__.FieldByName('PAGINAS').AsString
+                     + '","' + __queryMySQL_processamento__.FieldByName('FOLHAS').AsString
+                     + '","' + __queryMySQL_processamento__.FieldByName('OF_FORMULARIO').AsString
+                     + '","' + __queryMySQL_processamento__.FieldByName('DATA_POSTAGEM').AsString
+                     + '","' + __queryMySQL_processamento__.FieldByName('LOTE').AsString
+                     + '","' + __queryMySQL_processamento__.FieldByName('CIF').AsString
+                     + '","' + __queryMySQL_processamento__.FieldByName('PESO').AsString
+                     + '","' + __queryMySQL_processamento__.FieldByName('DIRECAO').AsString
+                     + '","' + __queryMySQL_processamento__.FieldByName('CATEGORIA').AsString
+                     + '","' + __queryMySQL_processamento__.FieldByName('PORTE').AsString
+                     + '","' + __queryMySQL_processamento__.FieldByName('STATUS_REGISTRO').AsString
+                     + '","' + __queryMySQL_processamento__.FieldByName('PAPEL').AsString
+                     + '","' + __queryMySQL_processamento__.FieldByName('TIPO_DOCUMENTO').AsString
+                     + '","' + __queryMySQL_processamento__.FieldByName('LINHA').AsString
+                     + '","' + sLinha
+                     + '")'
+                     ;
           objConexao.Executar_SQL(__queryMySQL_Insert_, sComando, 1);
 
-          //=================================================================================================================================================================
-          //  INSERE NA TABELA TRACK LINE
-          //=================================================================================================================================================================
-          if not objParametrosDeEntrada.TESTE then
-          begin
-            sComando := 'INSERT INTO  ' + objParametrosDeEntrada.TABELA_TRACK_LINE
-                      + ' (ARQUIVO_ZIP'
-                       + ',ARQUIVO_AFP'
-                       + ',SEQUENCIA_REGISTRO'
-                       + ',TIMESTAMP'
-                       + ',LOTE_PROCESSAMENTO'
-                       + ',MOVIMENTO'
-                       + ',ACABAMENTO'
-                       + ',PAGINAS'
-                       + ',FOLHAS'
-                       + ',OF_FORMULARIO'
-                       + ',DATA_POSTAGEM'
-                       + ',LOTE'
-                       + ',CIF'
-                       + ',PESO'
-                       + ',DIRECAO'
-                       + ',CATEGORIA'
-                       + ',PORTE'
-                       + ',STATUS_REGISTRO'
-                       + ',PAPEL'
-                       + ',LINHA'
-                       + ',LINHA_REL'
-                       + ') '
-                       + ' VALUES("'
-                       +         __queryMySQL_processamento__.FieldByName('ARQUIVO_ZIP').AsString
-                       + '","' + __queryMySQL_processamento__.FieldByName('ARQUIVO_AFP').AsString
-                       + '","' + __queryMySQL_processamento__.FieldByName('SEQUENCIA_REGISTRO').AsString
-                       + '","' + FormatDateTime('YYYY-MM-DD hh:mm:ss', objParametrosDeEntrada.TIMESTAMP)
-                       + '","' + __queryMySQL_processamento__.FieldByName('LOTE_PROCESSAMENTO').AsString
-                       + '","' + __queryMySQL_processamento__.FieldByName('MOVIMENTO').AsString
-                       + '","' + __queryMySQL_processamento__.FieldByName('ACABAMENTO').AsString
-                       + '","' + __queryMySQL_processamento__.FieldByName('PAGINAS').AsString
-                       + '","' + __queryMySQL_processamento__.FieldByName('FOLHAS').AsString
-                       + '","' + __queryMySQL_processamento__.FieldByName('OF_FORMULARIO').AsString
-                       + '","' + __queryMySQL_processamento__.FieldByName('DATA_POSTAGEM').AsString
-                       + '","' + __queryMySQL_processamento__.FieldByName('LOTE').AsString
-                       + '","' + __queryMySQL_processamento__.FieldByName('CIF').AsString
-                       + '","' + __queryMySQL_processamento__.FieldByName('PESO').AsString
-                       + '","' + __queryMySQL_processamento__.FieldByName('DIRECAO').AsString
-                       + '","' + __queryMySQL_processamento__.FieldByName('CATEGORIA').AsString
-                       + '","' + __queryMySQL_processamento__.FieldByName('PORTE').AsString
-                       + '","' + __queryMySQL_processamento__.FieldByName('STATUS_REGISTRO').AsString
-                       + '","' + __queryMySQL_processamento__.FieldByName('PAPEL').AsString
-                       + '","' + __queryMySQL_processamento__.FieldByName('LINHA').AsString
-                       + '","' + sLinha
-                       + '")'
-                       ;
-            objConexao.Executar_SQL(__queryMySQL_Insert_, sComando, 1);
-
-          END;
-
-
-
-
-
-          writeln(txtSaida, sLinha);
-
-          __queryMySQL_processamento__.Next;
-        end;
-
-        CloseFile(txtSaida);
+        END;
 
       end;
 
-      //=======================================================================================================================================
+      __queryMySQL_processamento__.Next;
 
     end;
-
-
-
-    {*
-    sArquivoAFP := objParametrosDeEntrada.LISTADEARQUIVOSDEENTRADA.Strings[iContArquivoZip];
-    sArquivoIDX := StringReplace(sArquivoAFP, '.AFP', '.IDX', [rfReplaceAll, rfIgnoreCase]);
-    sArquivoJRN := StringReplace(sArquivoAFP, '.AFP', '.JRN', [rfReplaceAll, rfIgnoreCase]);
-
     //=======================================================================================================================================
-    //  PEGA O NOME DO ARQUIVO ZIP NA TABELA DE TRACK LINE
-    //=======================================================================================================================================
-    sComando := 'SELECT ARQUIVO_ZIP FROM ' + objParametrosDeEntrada.TABELA_TRACK
-              + ' WHERE ARQUIVO_AFP = "' + sArquivoAFP + '" '
-              + ' GROUP BY ARQUIVO_ZIP';
-    objConexao.Executar_SQL(__queryMySQL_processamento__, sComando, 2);
-
-    sArquivoZIP := __queryMySQL_processamento__.FieldByName('ARQUIVO_ZIP').AsString;
-    //=======================================================================================================================================
-
-
-    //=======================================================================================================================================
-    //  CARREGA O IDX NA TABELA PROCESSAMENTO2
-    //=======================================================================================================================================
-    sComando := ' LOAD DATA LOCAL INFILE "' + StringReplace(sPathEntrada, '\', '\\', [rfReplaceAll, rfIgnoreCase]) + sArquivoIDX + '" '
-             + '  INTO TABLE ' + objParametrosDeEntrada.TABELA_PROCESSAMENTO2
-             + '    CHARACTER SET latin1 '
-             + '  LINES '
-             + '    TERMINATED BY "\r\n" '
-             + '   SET SEQUENCIA      = MID(LINHA, 1, 8) '
-             + '      ,ARQUIVO_ZIP    = "' + sArquivoZIP + '"'
-             + '      ,ARQUIVO_AFP    = "' + sArquivoAFP + '"'
-             + '      ,MOVIMENTO      = "' + FormatDateTime('YYYYMMDD', objParametrosDeEntrada.MOVIMENTO) + '"'
-             ;
-    objConexao.Executar_SQL(__queryMySQL_processamento__, sComando, 1);
-    //=======================================================================================================================================
-
-    //=======================================================================================================================================
-    //  CARREGA O JRN NA TABELA PROCESSAMENTO
-    //=======================================================================================================================================
-    sComando := ' LOAD DATA LOCAL INFILE "' + StringReplace(sPathEntrada, '\', '\\', [rfReplaceAll, rfIgnoreCase]) + sArquivoJRN + '" '
-             + '  INTO TABLE ' + objParametrosDeEntrada.TABELA_PROCESSAMENTO
-             + '    CHARACTER SET latin1 '
-             + '  FIELDS '
-             + '    TERMINATED BY "|" '
-             + '  LINES '
-             + '    TERMINATED BY "\r\n" '
-             + '   SET LOTE          = MID(CIF, 11, 5) '
-             + '      ,DATA_POSTAGEM = MID(CIF, 29, 6) '
-             + '      ,ARQUIVO_AFP   = "' + sArquivoAFP + '"'
-             + '      ,ARQUIVO_ZIP   = "' + sArquivoZIP + '"'
-             + '      ,MOVIMENTO     = "' + FormatDateTime('YYYYMMDD', objParametrosDeEntrada.MOVIMENTO) + '"'
-             + '      ,OF_FORMULARIO    = "' + objParametrosDeEntrada.OF_FORMULARIO + '"'
-             + '      ,PESO             = "' + objParametrosDeEntrada.PESO_PAPEL    + '"'
-             + '      ,ACABAMENTO       = "' + objParametrosDeEntrada.ACABAMENTO    + '"'
-             + '      ,PAPEL            = "' + objParametrosDeEntrada.PAPEL         + '"'
-             + '      ,INDICE_CEP_PLANO = ('
-             + '                             SELECT SEQ FROM ' + objParametrosDeEntrada.TABELA_PLANO_DE_TRIAGEM
-             + '                             WHERE CEPINI <= MID(CEP, 2, 8) AND CEPFIN >= MID(CEP, 2, 8) '
-             + ')'
-             + '      ,ARQUIVO_COUNT    = "' + IntToStr(iContArquivos+1) + '"'
-             ;
-    objConexao.Executar_SQL(__queryMySQL_processamento__, sComando, 1);
-    //=======================================================================================================================================
-    *}
 
   end;
 
 
-
-
-
-  {*
   //=======================================================================================================================================
-  //  FAZ A SEGMENTAÇÃO DE SAÍDA
+  //  CRIA SAÍDA DO RELATÓRIO DIÁRIO POR ARQUIVO
   //=======================================================================================================================================
-  sComando := 'SELECT OF_FORMULARIO, ACABAMENTO, PAPEL, ARQUIVO_COUNT, ARQUIVO_AFP, DATA_POSTAGEM FROM ' + objParametrosDeEntrada.TABELA_PROCESSAMENTO
-            + ' WHERE INDICE_CEP_PLANO IS NOT NULL '
-            + ' GROUP BY OF_FORMULARIO, ACABAMENTO, PAPEL, ARQUIVO_COUNT, DATA_POSTAGEM';
+  sComando := ' SELECT ARQUIVO_ORIGEM_BANCO, DTA_REFERENCIA  FROM ' + objParametrosDeEntrada.TABELA_PROCESSAMENTO
+            + ' GROUP BY ARQUIVO_ORIGEM_BANCO, DTA_REFERENCIA ';
   objConexao.Executar_SQL(__queryMySQL_processamento__, sComando, 2);
 
-  sPathMovimentoPedido := objString.AjustaPath(objParametrosDeEntrada.PATHSAIDA) + FormatDateTime('YYYYMMDD', objParametrosDeEntrada.MOVIMENTO) + sPathComplemento + PathDelim + FormatFloat(objParametrosDeEntrada.FORMATACAO_LOTE_PEDIDO, StrToInt(objParametrosDeEntrada.PEDIDO_LOTE)) + PathDelim;
 
-  while not __queryMySQL_processamento__.Eof do
-  begin
+  IF __queryMySQL_processamento__.RecordCount > 0 THEN
+  Begin
 
-    //================================================================================================================================
-    // CRIANDO IDX ARQUIVOS DE SAÍDA
-    //================================================================================================================================
-    sComando := ' SELECT IDX.LINHA, JRN.* FROM ' + objParametrosDeEntrada.TABELA_PROCESSAMENTO2 + ' AS IDX '
-              + '                    LEFT JOIN ' + objParametrosDeEntrada.TABELA_PROCESSAMENTO  + ' AS JRN '
-              + '  ON IDX.SEQUENCIA = JRN.SEQUENCIA '
-              + '  WHERE JRN.INDICE_CEP_PLANO IS NOT NULL '
-              + '    AND JRN.OF_FORMULARIO = "' + __queryMySQL_processamento__.FieldByName('OF_FORMULARIO').AsString + '" '
-              + '    AND JRN.ACABAMENTO    = "' + __queryMySQL_processamento__.FieldByName('ACABAMENTO').AsString + '" '
-              + '    AND JRN.PAPEL         = "' + __queryMySQL_processamento__.FieldByName('PAPEL').AsString + '" '
-              + '    AND JRN.ARQUIVO_COUNT =  ' + __queryMySQL_processamento__.FieldByName('ARQUIVO_COUNT').AsString
-              + '    AND JRN.DATA_POSTAGEM =  ' + __queryMySQL_processamento__.FieldByName('DATA_POSTAGEM').AsString
-              + '  ORDER BY JRN.INDICE_CEP_PLANO ';
+    sARQUIVO_ORIGEM_BANCO := Trim(__queryMySQL_processamento__.FieldByName('ARQUIVO_ORIGEM_BANCO').AsString);
+    sDTA_REFERENCIA       := Trim(__queryMySQL_processamento__.FieldByName('DTA_REFERENCIA').AsString);
+
+    sArquivoTXT  := 'RELATORIO_' + sARQUIVO_ORIGEM_BANCO + '_' + sDTA_REFERENCIA + '.CSV';
+
+    AssignFile(txtSaida, sPathMovimentoArquivos + sArquivoTXT);
+    Rewrite(txtSaida);
+
+    sLinha := 'N_CONTRATO;N_CHASSI;CPF/CNPJ CLIENTE;NOME CLIENTE;VALOR CARNE;QTD PARCELAS;DT VENCIMENTO;STATUS;CODIGO POSTAGEM CORREIOS;ENDEREÇO;BAIRRO;CIDADE;UF;CEP;ARQUIVO;DTA_REFERENCIA';
+    writeln(txtSaida, sLinha);
+
+    //=======================================================================================================================================
+    //  CRIA SAÍDA DO RELATÓRIO DIÁRIO DETALHES
+    //=======================================================================================================================================
+    sComando := ' SELECT *  FROM ' + objParametrosDeEntrada.TABELA_PROCESSAMENTO
+              + ' WHERE ARQUIVO_ORIGEM_BANCO = "' + sARQUIVO_ORIGEM_BANCO + '" '
+              + '   AND DTA_REFERENCIA       = "' + sDTA_REFERENCIA + '"';
     objConexao.Executar_SQL(__queryMySQL_processamento2__, sComando, 2);
 
-    if __queryMySQL_processamento2__.RecordCount > 0 then
-    begin
-
-        //==============================================================================
-        // ARQUIVO AFP ORIGEM
-        //==============================================================================
-        sArquivoAFP := __queryMySQL_processamento__.FieldByName('ARQUIVO_AFP').AsString;
-        //==============================================================================
-
-        //==============================================================================================================================================================================================================================================================================================
-        // ESTRUTURA PARA CRIAÇÃO DE *** MODELOS ***
-        //==============================================================================================================================================================================================================================================================================================
-        IF StrToBool(objParametrosDeEntrada.GERAR_MODELOS) THEN
-        BEGIN
-            //==============================================================================================================================================================================================================================================================================================
-            // CRIA A PASTA DA SAIDA POR OF POR ARQUIVO DE ENTRADA *** MODELOS ***
-            //==============================================================================================================================================================================================================================================================================================
-            sPathMovimentoIDX_Modelos        := sPathMovimentoPedido + 'POSTAGEN_' + __queryMySQL_processamento__.FieldByName('DATA_POSTAGEM').AsString + PathDelim + FormatFloat(objParametrosDeEntrada.FORMATACAO_LOTE_PEDIDO, __queryMySQL_processamento__.FieldByName('ARQUIVO_COUNT').AsInteger) + PathDelim + __queryMySQL_processamento__.FieldByName('OF_FORMULARIO').AsString + '_' + __queryMySQL_processamento__.FieldByName('ACABAMENTO').AsString + '_' + __queryMySQL_processamento__.FieldByName('PAPEL').AsString + '_MODELOS' + PathDelim;
-            sPathMovimentoAFP_Modelos        := sPathMovimentoIDX_Modelos + 'AFP' + PathDelim;
-
-            ForceDirectories(sPathMovimentoAFP_Modelos);
-            //==============================================================================================================================================================================================================================================================================================
-
-            //=============================================================================================================================================================================================================================================================================================================================
-            // CRIA O NOME PADRÃO DO ARQUIVO IDX DE SAÍDA E DO SPOOL AFP *** MODELOS ***
-            //=============================================================================================================================================================================================================================================================================================================================
-            sArquivoDOC_Modelos := 'DOC_' + __queryMySQL_processamento__.FieldByName('OF_FORMULARIO').AsString + '_' + __queryMySQL_processamento__.FieldByName('ACABAMENTO').AsString + '_' + __queryMySQL_processamento__.FieldByName('PAPEL').AsString + '_' + __queryMySQL_processamento__.FieldByName('ARQUIVO_COUNT').AsString + '_MODELOS.IDX';
-            sArquivoAFP_DOC_Modelos     := StringReplace(sArquivoDOC_Modelos, '.IDX', '.AFP', [rfReplaceAll, rfIgnoreCase]);
-            //=============================================================================================================================================================================================================================================================================================================================
-
-            stlIDXModelos.Clear;
-
-            AssignFile(txtSaidaModelos, sPathMovimentoIDX_Modelos + sArquivoDOC_Modelos);
-            Rewrite(txtSaidaModelos);
-        end;
-        //==============================================================================================================================================================================================================================================================================================
-
-        //==============================================================================================================================================================================================================================================================================================
-        // ESTRUTURA PARA CRIAÇÃO DE *** PRODUÇÃO ***
-        //==============================================================================================================================================================================================================================================================================================
-
-            //==============================================================================================================================================================================================================================================================================================
-            // CRIA A PASTA DA SAIDA POR OF POR ARQUIVO DE ENTRADA
-            //==============================================================================================================================================================================================================================================================================================
-            sPathMovimentoIDX                := sPathMovimentoPedido + 'POSTAGEN_' + __queryMySQL_processamento__.FieldByName('DATA_POSTAGEM').AsString + PathDelim + FormatFloat(objParametrosDeEntrada.FORMATACAO_LOTE_PEDIDO, __queryMySQL_processamento__.FieldByName('ARQUIVO_COUNT').AsInteger) + PathDelim + __queryMySQL_processamento__.FieldByName('OF_FORMULARIO').AsString + '_' + __queryMySQL_processamento__.FieldByName('ACABAMENTO').AsString + '_' + __queryMySQL_processamento__.FieldByName('PAPEL').AsString + PathDelim;
-            sPathMovimentoAFP                := sPathMovimentoIDX + 'AFP' + PathDelim;
-
-            ForceDirectories(sPathMovimentoAFP);
-            //==============================================================================================================================================================================================================================================================================================
-
-            //=============================================================================================================================================================================================================================================================================================================================
-            // CRIA O NOME PADRÃO DO ARQUIVO IDX DE SAÍDA E DO SPOOL AFP
-            //=============================================================================================================================================================================================================================================================================================================================
-            sArquivoDOC     := 'DOC_' + __queryMySQL_processamento__.FieldByName('OF_FORMULARIO').AsString + '_' + __queryMySQL_processamento__.FieldByName('ACABAMENTO').AsString + '_' + __queryMySQL_processamento__.FieldByName('PAPEL').AsString + '_' + __queryMySQL_processamento__.FieldByName('ARQUIVO_COUNT').AsString + '.IDX';
-            sArquivoAFP_DOC := StringReplace(sArquivoDOC, '.IDX', '.AFP', [rfReplaceAll, rfIgnoreCase]);
-            //=============================================================================================================================================================================================================================================================================================================================
-
-        AssignFile(txtSaida, sPathMovimentoIDX + sArquivoDOC);
-        Rewrite(txtSaida);
-        //==============================================================================================================================================================================================================================================================================================
-
-        while NOT __queryMySQL_processamento2__.Eof DO
-        begin
-
-          sLinha := objString.AjustaStr(FormatFloat('00000000', __queryMySQL_processamento2__.RecNo), 8)
-                   +  __queryMySQL_processamento2__.FieldByName('LINHA').AsString
-                   + objString.AjustaStr(__queryMySQL_processamento2__.FieldByName('AUDIT').AsString, 10)
-                   + objString.AjustaStr(__queryMySQL_processamento2__.FieldByName('CIF').AsString, 35)
-                   + objString.AjustaStr(__queryMySQL_processamento2__.FieldByName('PAGINAS').AsString, 4)
-                   + objString.AjustaStr(__queryMySQL_processamento2__.FieldByName('FOLHAS').AsString, 4)
-                   + objString.AjustaStr(__queryMySQL_processamento2__.FieldByName('PAGINA_INICIAL').AsString, 7)
-                   + objString.AjustaStr(__queryMySQL_processamento2__.FieldByName('PAGINA_FINAL').AsString, 7)
-                   + objString.AjustaStr(__queryMySQL_processamento2__.FieldByName('NOME').AsString, 50)
-                   + objString.AjustaStr(__queryMySQL_processamento2__.FieldByName('LOGRADOURO').AsString, 110)
-                   + objString.AjustaStr(__queryMySQL_processamento2__.FieldByName('CEP').AsString, 10)
-                   + objString.AjustaStr(__queryMySQL_processamento2__.FieldByName('FILLER_01').AsString, 2)
-                   + objString.AjustaStr(__queryMySQL_processamento2__.FieldByName('FILLER_02').AsString, 2)
-                   + objString.AjustaStr(__queryMySQL_processamento2__.FieldByName('FILLER_03').AsString, 2)
-                   + objString.AjustaStr(__queryMySQL_processamento2__.FieldByName('FILLER_04').AsString, 2)
-                   + objString.AjustaStr(__queryMySQL_processamento2__.FieldByName('FILLER_05').AsString, 2)
-                   + objString.AjustaStr(__queryMySQL_processamento2__.FieldByName('CODIGO_BARRAS').AsString, 50)
-                   + objString.AjustaStr(__queryMySQL_processamento2__.FieldByName('FILLER_06').AsString, 2)
-                   + objString.AjustaStr(__queryMySQL_processamento2__.FieldByName('FILLER_07').AsString, 6)
-                   + objString.AjustaStr(__queryMySQL_processamento2__.FieldByName('NOME_2').AsString, 50)
-                   + objString.AjustaStr(__queryMySQL_processamento2__.FieldByName('DEVOLUCAO').AsString, 10)
-                   + objString.AjustaStr(__queryMySQL_processamento2__.FieldByName('DATA_POSTAGEM').AsString, 10)
-                   + objString.AjustaStr(__queryMySQL_processamento2__.FieldByName('ARQUIVO_AFP').AsString, 50)
-                   + objString.AjustaStr(__queryMySQL_processamento2__.FieldByName('ARQUIVO_ZIP').AsString, 50)
-                   + objString.AjustaStr(__queryMySQL_processamento2__.FieldByName('MOVIMENTO').AsString, 10)
-                   + objString.AjustaStr(__queryMySQL_processamento2__.FieldByName('OF_FORMULARIO').AsString, 11)
-                   + objString.AjustaStr(__queryMySQL_processamento2__.FieldByName('PESO').AsString, 7)
-                   + objString.AjustaStr(__queryMySQL_processamento2__.FieldByName('ACABAMENTO').AsString, 20)
-                   + objString.AjustaStr(__queryMySQL_processamento2__.FieldByName('PAPEL').AsString, 10)
-                   + FormatFloat('0000000', __queryMySQL_processamento2__.FieldByName('INDICE_CEP_PLANO').AsInteger);
-
-          writeln(txtSaida, slinha);
-
-          if (stlIDXModelos.Count < StrToInt(objParametrosDeEntrada.NUMERO_DE_MODELOS)) AND (StrToBool(objParametrosDeEntrada.GERAR_MODELOS)) then
-            stlIDXModelos.Add(Copy(sLinha, 80, 1) + sLinha);
-
-          //writeln(txtSaidaModelos, slinha);
-
-          //====================================================================
-          //                            DEFINE O PORTE
-          //====================================================================
-          case __queryMySQL_processamento2__.FieldByName('PESO').AsInteger of
-            0001..2000: sPorte := '1';
-            2001..5000: sPorte := '2';
-          else
-             sPorte := '3';
-          end;
-          //====================================================================
-
-          //==============================================================
-          //  FAC NORMAL
-          //==============================================================
-          sCep := Copy(__queryMySQL_processamento2__.FieldByName('CEP').AsString, 2, 8);
-
-          if sCEP < '10000000' then  //Apurando o Destino/Categoria
-          begin
-
-            sDirecao   := '1';
-            sCategoria := '82015'; // Grande S.Paulo //
-
-          end
-          else
-          begin
-
-            if sCEP < '20000000' then
-            begin
-
-              sDirecao   := '2';
-              sCategoria := '82023'; // Interior de S.Paulo //
-
-            end
-            else
-            begin
-
-              sDirecao   := '3';
-              sCategoria := '82031'; // Outros Estados //
-
-            end
-
-          end;
-          //======================================================================================================================================================
-
-          //=================================================================================================================================================================
-          //  INSERE NA TABELA TRACK E CRIA CSV TRACK PRÉVIAS
-          //=================================================================================================================================================================
-          if not objParametrosDeEntrada.TESTE then
-          begin
-            sComando := 'INSERT INTO  ' + objParametrosDeEntrada.TABELA_TRACK_LINE
-                      + ' (ARQUIVO_ZIP'
-                       + ',ARQUIVO_AFP'
-                       + ',SEQUENCIA_REGISTRO'
-                       + ',TIMESTAMP'
-                       + ',LOTE_PROCESSAMENTO'
-                       + ',MOVIMENTO'
-                       + ',ACABAMENTO'
-                       + ',PAGINAS'
-                       + ',FOLHAS'
-                       + ',OF_FORMULARIO'
-                       + ',DATA_POSTAGEM'
-                       + ',LOTE'
-                       + ',CIF'
-                       + ',PESO'
-                       + ',DIRECAO'
-                       + ',CATEGORIA'
-                       + ',PORTE'
-                       + ',STATUS_REGISTRO'
-                       + ',PAPEL'
-                       + ') '
-                       + ' VALUES("'
-                       +         __queryMySQL_processamento2__.FieldByName('ARQUIVO_ZIP').AsString
-                       + '","' + __queryMySQL_processamento2__.FieldByName('ARQUIVO_AFP').AsString
-                       + '","' + __queryMySQL_processamento2__.FieldByName('SEQUENCIA').AsString
-                       + '","' + FormatDateTime('YYYY-MM-DD hh:mm:ss', objParametrosDeEntrada.TIMESTAMP)
-                       + '","' + FormatFloat(objParametrosDeEntrada.FORMATACAO_LOTE_PEDIDO, StrToInt(objParametrosDeEntrada.PEDIDO_LOTE))
-                       + '","' + FormatDateTime('YYYYMMDD', objParametrosDeEntrada.MOVIMENTO)
-                       + '","' + __queryMySQL_processamento2__.FieldByName('ACABAMENTO').AsString
-                       + '","' + __queryMySQL_processamento2__.FieldByName('PAGINAS').AsString
-                       + '","' + __queryMySQL_processamento2__.FieldByName('FOLHAS').AsString
-                       + '","' + __queryMySQL_processamento2__.FieldByName('OF_FORMULARIO').AsString
-                       + '","' + __queryMySQL_processamento2__.FieldByName('DATA_POSTAGEM').AsString
-                       + '","' + __queryMySQL_processamento2__.FieldByName('LOTE').AsString
-                       + '","' + __queryMySQL_processamento2__.FieldByName('CIF').AsString
-                       + '","' + __queryMySQL_processamento2__.FieldByName('PESO').AsString
-                       + '","' + sDirecao
-                       + '","' + sCategoria
-                       + '","' + sPorte
-                       + '","' + '0'
-                       + '","' + __queryMySQL_processamento2__.FieldByName('PAPEL').AsString
-                       + '")'
-                       ;
-            objConexao.Executar_SQL(__queryMySQL_Insert_, sComando, 1);
-
-          end;
-
-          __queryMySQL_processamento2__.Next
-        end;
-
-        CloseFile(txtSaida);
-
-
-        if StrToBool(objParametrosDeEntrada.GERAR_MODELOS) then
-        begin
-        
-          stlIDXModelos.Sorted := True;
-
-          for iContLinas := 0 to stlIDXModelos.Count - 1 do
-          begin
-            sLinha := Copy(stlIDXModelos.Strings[iContLinas], 2, Length(stlIDXModelos.Strings[iContLinas]));
-            writeln(txtSaidaModelos, slinha);
-          end;
-
-          CloseFile(txtSaidaModelos);
-
-          //stlIDXModelos.SaveToFile(sPathMovimentoIDX_Modelos + sArquivoDOC_Modelos);
-        end;
-
-        //===============================================================================================================================================
-        // COPIANDO AFP DE ENTRADA TEMPORÁRIO PARA CRIAÇÃO DO SPOOL
-        //===============================================================================================================================================
-        // *** PRODUÇÃO ***
-        objFuncoesWin.CopiarArquivo(sPathEntrada + sArquivoAFP, sPathMovimentoIDX         + sArquivoAFP_DOC);
-        // *** MODELOS ***
-        if StrToBool(objParametrosDeEntrada.GERAR_MODELOS) then
-          objFuncoesWin.CopiarArquivo(sPathEntrada + sArquivoAFP, sPathMovimentoIDX_Modelos + sArquivoAFP_DOC_Modelos);
-        //===============================================================================================================================================
-
-        //===================================================================================================
-        // CRIANDO SPOOL AFP PARA O ARQUIVO IDX GERADO
-        //===============================================================================================================================================
-        // *** PRODUÇÃO ***
-        Atualiza_arquivo_conf_C(objParametrosDeEntrada.APP_C_GERA_SPOOL_CFG, sPathMovimentoIDX,         sPathMovimentoAFP, '', '', '');
-        execulta_app_c(objParametrosDeEntrada.APP_C_GERA_SPOOL_EXE, objParametrosDeEntrada.APP_C_GERA_SPOOL_CFG);
-
-        // *** MODELOS ***
-        if StrToBool(objParametrosDeEntrada.GERAR_MODELOS) then
-        begin
-          Atualiza_arquivo_conf_C(objParametrosDeEntrada.APP_C_GERA_SPOOL_CFG, sPathMovimentoIDX_Modelos, sPathMovimentoAFP_Modelos, '', '', '');
-          execulta_app_c(objParametrosDeEntrada.APP_C_GERA_SPOOL_EXE, objParametrosDeEntrada.APP_C_GERA_SPOOL_CFG);
-        end;
-        //===============================================================================================================================================
-
-        //===============================================================================================================================================
-        // EXCLUI O ARQUIVO AFP ENTRADA APÓS GERAÇÃO DO NOVO SPOOL
-        //===============================================================================================================================================
-        // *** PRODUÇÃO ***
-        DeleteFile(sPathMovimentoIDX         + sArquivoAFP_DOC);
-        // *** MODELOS ***
-        if StrToBool(objParametrosDeEntrada.GERAR_MODELOS) then
-          DeleteFile(sPathMovimentoIDX_Modelos + sArquivoAFP_DOC_Modelos);
-        //===============================================================================================================================================
-
-    end;
-    //================================================================================================================================
-
-    __queryMySQL_processamento__.Next;
-  end;
-
-  //==================================================================================================================================================================================================
-  // CRIANDO RELATÓRIO DE QUANTIDADES
-  //==================================================================================================================================================================================================
-  stlRelatorio.Clear;
-  sComando := 'SELECT '
-            + '  concat(mid(MOVIMENTO, 1, 4), "-", mid(MOVIMENTO, 5, 2), "-", mid(MOVIMENTO, 7, 2)) as MOVIMENTO'
-            + ', concat(mid(DATA_POSTAGEM, 1, 2), "/", mid(DATA_POSTAGEM, 3, 2), "/", mid(DATA_POSTAGEM, 5, 2)) as DATA_POSTAGEM'
-            + ', LOTE'
-            + ', OF_FORMULARIO'
-            + ', ACABAMENTO'
-            + ', PAPEL'
-            + ', COUNT(OF_FORMULARIO) AS QUANTIDADE '
-            + ', SUM(PAGINAS)         AS PAGINAS '
-            + ', SUM(FOLHAS)          AS FOLHAS '
-            + ' FROM ' + objParametrosDeEntrada.TABELA_PROCESSAMENTO
-            + ' WHERE ARQUIVO_COUNT IS NOT NULL and DATA_POSTAGEM <> "" '
-            + ' GROUP BY OF_FORMULARIO, ACABAMENTO, PAPEL, LOTE';
-  objConexao.Executar_SQL(__queryMySQL_processamento__, sComando, 2);
-
-  sLinha := stringOfChar('-', 106)
-  + #13 + #10 + 'RELATÓRIO DE QUANTIDADES - PROCESSAMENTO' + sPathComplemento
-  + #13 + #10 + stringOfChar('-', 106)
-  + #13 + #10 + 'MOVIMENTO  DATA POST. LOTE POST. OF FORMULARIO      ACABAMENTO      PAPEL QUANTIDADE    PAGINAS     FOLHAS'
-  + #13 + #10 + '---------- ---------- ---------- ------------- --------------- ---------- ---------- ---------- ----------';
-
-  stlRelatorio.Add(sLinha);
-
-  iTotalObjestos  := 0;
-  iTotalFolhas    := 0;
-  iTotalPaginas   := 0;
-
-  while not __queryMySQL_processamento__.Eof do
-  begin
-
-    sLinha := objString.AjustaStr(__queryMySQL_processamento__.FieldByName('MOVIMENTO').AsString, 10, 1)
-      + ' ' + objString.AjustaStr(__queryMySQL_processamento__.FieldByName('DATA_POSTAGEM').AsString, 10, 1)
-      + ' ' + objString.AjustaStr(__queryMySQL_processamento__.FieldByName('LOTE').AsString, 10, 1)
-      + ' ' + objString.AjustaStr(__queryMySQL_processamento__.FieldByName('OF_FORMULARIO').AsString, 13, 1)
-      + ' ' + objString.AjustaStr(__queryMySQL_processamento__.FieldByName('ACABAMENTO').AsString, 15, 1)
-      + ' ' + objString.AjustaStr(__queryMySQL_processamento__.FieldByName('PAPEL').AsString, 10, 1)
-      + ' ' + FormatFloat('0000000000', __queryMySQL_processamento__.FieldByName('QUANTIDADE').AsInteger)
-      + ' ' + FormatFloat('0000000000',    __queryMySQL_processamento__.FieldByName('PAGINAS').AsInteger)
-      + ' ' + FormatFloat('0000000000',    __queryMySQL_processamento__.FieldByName('FOLHAS').AsInteger)
-      ;
-    stlRelatorio.Add(sLinha);
-
-    //=================================================================================================================================================================
-
-    iTotalObjestos  := iTotalObjestos  + __queryMySQL_processamento__.FieldByName('QUANTIDADE').AsInteger;
-    iTotalFolhas    := iTotalFolhas    + __queryMySQL_processamento__.FieldByName('FOLHAS').AsInteger;
-    iTotalPaginas   := iTotalPaginas   + __queryMySQL_processamento__.FieldByName('PAGINAS').AsInteger;
-
-    __queryMySQL_processamento__.Next;
-  end;
-
-  sLinha := stringOfChar('-', 73) + ' ---------- ---------- ----------'
-  + #13 + #10 + 'TOTAIS' + stringOfChar(' ', 68) + FormatFloat('0000000000', iTotalObjestos) + ' ' + FormatFloat('0000000000', iTotalPaginas) + ' ' + FormatFloat('0000000000', iTotalFolhas);
-  stlRelatorio.Add(sLinha);
-
-  sArquivoREL := sPathMovimentoPedido + 'RELATORIO_DE_QUANTIDADES_' + FormatDateTime('YYYYMMDD', objParametrosDeEntrada.MOVIMENTO) +'.REL';
-
-  stlRelatorio.SaveToFile(sArquivoREL);
-  objLogar.Logar(#13 + #10 + stlRelatorio.Text + #13 + #10);
-
-  objFuncoesWin.ExecutarArquivoComProgramaDefault(sArquivoREL);
-  //==================================================================================================================================================================================================
-
-
-  //==================================================================================================================================================
-  //  ATUALIZANDO STATUS DO ARQUIVO NA TABELA TRACK
-  //==================================================================================================================================================
-  if not objParametrosDeEntrada.TESTE then
-  BEGIN
-    sComando := 'SELECT ARQUIVO_ZIP FROM ' + objParametrosDeEntrada.TABELA_PROCESSAMENTO
-              + ' GROUP BY ARQUIVO_AFP';
-    objConexao.Executar_SQL(__queryMySQL_processamento__, sComando, 2);
-
-    while NOT __queryMySQL_processamento__.Eof DO
+    WHILE NOT __queryMySQL_processamento2__.Eof DO
     BEGIN
 
-      sComando := 'UPDATE ' + objParametrosDeEntrada.TABELA_TRACK
-                + ' SET STATUS_ARQUIVO = 1'
-                + ' WHERE ARQUIVO_ZIP = "' + __queryMySQL_processamento__.FieldByName('ARQUIVO_ZIP').AsString + '"';
-      objConexao.Executar_SQL(__queryMySQL_processamento2__, sComando, 1);
+      sLinha := '"' + __queryMySQL_processamento2__.FieldByName('N_CONTRATO').AsString
+            + '";"' + __queryMySQL_processamento2__.FieldByName('N_CHASSI').AsString
+            + '";"' + __queryMySQL_processamento2__.FieldByName('CPF_CNPJ_CLIENTE').AsString
+            + '";"' + __queryMySQL_processamento2__.FieldByName('NOME_CLIENTE').AsString
+            + '";"' + __queryMySQL_processamento2__.FieldByName('VALOR_CARNE').AsString
+            + '";"' + __queryMySQL_processamento2__.FieldByName('QTD_PARCELAS').AsString
+            + '";"' + __queryMySQL_processamento2__.FieldByName('DT_VENCIMENTO').AsString
+            + '";"' + __queryMySQL_processamento2__.FieldByName('STATUS').AsString
+            + '";"' + __queryMySQL_processamento2__.FieldByName('CODIGO_POSTAGEM_CORREIOS').AsString
+            + '";"' + __queryMySQL_processamento2__.FieldByName('ENDERECO').AsString
+            + '";"' + __queryMySQL_processamento2__.FieldByName('BAIRRO').AsString
+            + '";"' + __queryMySQL_processamento2__.FieldByName('CIDADE').AsString
+            + '";"' + __queryMySQL_processamento2__.FieldByName('UF').AsString
+            + '";"' + __queryMySQL_processamento2__.FieldByName('CEP').AsString
+            + '";"' + __queryMySQL_processamento2__.FieldByName('ARQUIVO_ORIGEM_BANCO').AsString
+            + '";"' + __queryMySQL_processamento2__.FieldByName('DTA_REFERENCIA').AsString
+            +   '"';
 
-      __queryMySQL_processamento__.Next;
-    end;
+      writeln(txtSaida, sLinha);
+
+      __queryMySQL_processamento2__.Next;
+    END;
+
+    CloseFile(txtSaida);
   END;
-  //==================================================================================================================================================
-  *}
+  //=======================================================================================================================================
 
 end;
 

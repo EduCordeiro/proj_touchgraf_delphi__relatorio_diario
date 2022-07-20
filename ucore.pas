@@ -981,6 +981,10 @@ var
   sPorte                            : string;
   sCep                              : string;
 
+  iStatusCodigo                     : Integer;
+  sStatusCodigo                     : string;
+  sStatusLabel                      : string;
+
   sLote                             : string;
   sPostagem                         : string;
   sTipoDocumento                    : string;
@@ -1089,6 +1093,17 @@ begin
       if sTipoDocumento = 'CARNE' then
       begin
 
+        sStatusCodigo := __queryMySQL_processamento__.FieldByName('STATUS_REGISTRO').AsString;
+
+        sStatusLabel  := '';
+        iStatusCodigo := StrToIntDef(sStatusCodigo, 0);
+
+        if iStatusCodigo = 5 then
+          sStatusLabel := 'RETENÇÃO';
+
+        if (iStatusCodigo = 2) or (iStatusCodigo = 3) or (iStatusCodigo = 4) then
+          sStatusLabel := 'CEP INCONSISTENTE';
+
         sComando := 'INSERT INTO  ' + objParametrosDeEntrada.TABELA_PROCESSAMENTO
                    + ' (SEQUENCIA'
                    + ' ,N_CONTRATO'
@@ -1116,7 +1131,7 @@ begin
                          + '","' + Trim(copy(__queryMySQL_processamento__.FieldByName('LINHA').AsString, 1814, 015))
                          + '","' + Trim(copy(__queryMySQL_processamento__.FieldByName('LINHA').AsString, 0500, 003))
                          + '","' + Trim(copy(__queryMySQL_processamento__.FieldByName('LINHA').AsString, 0047, 008))
-                         + '","' + 'status'
+                         + '","' + sStatusLabel
                          + '","' + Trim(copy(__queryMySQL_processamento__.FieldByName('LINHA').AsString, 1899, 034))
                          + '","' + Trim(copy(__queryMySQL_processamento__.FieldByName('LINHA').AsString, 0713, 060))
                          + '","' + Trim(copy(__queryMySQL_processamento__.FieldByName('LINHA').AsString, 0808, 030))
@@ -1217,7 +1232,23 @@ begin
     AssignFile(txtSaida, sPathMovimentoArquivos + sArquivoTXT);
     Rewrite(txtSaida);
 
-    sLinha := 'N_CONTRATO;N_CHASSI;CPF/CNPJ CLIENTE;NOME CLIENTE;VALOR CARNE;QTD PARCELAS;DT VENCIMENTO;STATUS;CODIGO POSTAGEM CORREIOS;ENDEREÇO;BAIRRO;CIDADE;UF;CEP;ARQUIVO;DTA_REFERENCIA';
+    sLinha := '"N_CONTRATO"'
+           + ';"N_CHASSI"'
+           + ';"CPF/CNPJ CLIENTE"'
+           + ';"NOME CLIENTE"'
+           + ';"VALOR CARNE"'
+           + ';"QTD PARCELAS"'
+           + ';"DT VENCIMENTO"'
+           + ';"STATUS"'
+           + ';"CODIGO POSTAGEM CORREIOS"'
+           + ';"ENDEREÇO"'
+           + ';"BAIRRO"'
+           + ';"CIDADE"'
+           + ';"UF"'
+           + ';"CEP"'
+           + ';"ARQUIVO"'
+           + ';"DTA_REFERENCIA"'
+           ;
     writeln(txtSaida, sLinha);
 
     //=======================================================================================================================================

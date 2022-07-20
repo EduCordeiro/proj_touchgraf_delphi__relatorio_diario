@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS proj_touchgraf_delphi__relatorio_diario.processamento
   ,VALOR_CARNE                varchar(015) NOT NULL
   ,QTD_PARCELAS               varchar(003) NOT NULL
   ,DT_VENCIMENTO              varchar(008) NOT NULL
-  ,STATUS                     INT(11) NOT NULL DEFAULT '0'
+  ,STATUS                     varchar(020) NOT NULL
   ,CODIGO_POSTAGEM_CORREIOS   varchar(034) NOT NULL
   ,ENDERECO                   varchar(060) NOT NULL
   ,BAIRRO                     varchar(030) NOT NULL

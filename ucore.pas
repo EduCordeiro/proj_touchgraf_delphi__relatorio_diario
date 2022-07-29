@@ -1095,7 +1095,7 @@ begin
 
         sStatusCodigo := __queryMySQL_processamento__.FieldByName('STATUS_REGISTRO').AsString;
 
-        sStatusLabel  := '';
+        sStatusLabel  := 'IMPRESSAO';
         iStatusCodigo := StrToIntDef(sStatusCodigo, 0);
 
         if iStatusCodigo = 5 then

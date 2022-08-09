@@ -975,12 +975,14 @@ var
   sArquivoREL                       : string;
   sComando                          : string;
   sLinha                            : string;
+  sLinhaTrackLineOrigem             : string;
 
   sDirecao                          : string;
   sCategoria                        : string;
   sPorte                            : string;
   sCep                              : string;
 
+  sProdutoCarne                     : string;
   iStatusCodigo                     : Integer;
   sStatusCodigo                     : string;
   sStatusLabel                      : string;
@@ -1084,7 +1086,9 @@ begin
     WHILE NOT __queryMySQL_processamento__.Eof DO
     BEGIN
 
-      iContLinas := iContLinas + 1;
+      iContLinas            := iContLinas + 1;
+
+      sLinhaTrackLineOrigem := __queryMySQL_processamento__.FieldByName('LINHA').AsString;
 
       //=================================================================================================================================================================
       //  INSERE NA TABELA PROCESSAMENTO
@@ -1093,10 +1097,15 @@ begin
       if sTipoDocumento = 'CARNE' then
       begin
 
+        sProdutoCarne := copy(sLinhaTrackLineOrigem, 24, 3);
+
         sStatusCodigo := __queryMySQL_processamento__.FieldByName('STATUS_REGISTRO').AsString;
 
         sStatusLabel  := 'IMPRESSAO';
         iStatusCodigo := StrToIntDef(sStatusCodigo, 0);
+
+        if sProdutoCarne = '120' then
+          sStatusLabel  := 'IMPRESSAO/PDF';
 
         if iStatusCodigo = 5 then
           sStatusLabel := 'RETENÇÃO';
@@ -1224,68 +1233,76 @@ begin
   IF __queryMySQL_processamento__.RecordCount > 0 THEN
   Begin
 
-    sARQUIVO_ORIGEM_BANCO := Trim(__queryMySQL_processamento__.FieldByName('ARQUIVO_ORIGEM_BANCO').AsString);
-    sDTA_REFERENCIA       := Trim(__queryMySQL_processamento__.FieldByName('DTA_REFERENCIA').AsString);
+    while not __queryMySQL_processamento__.Eof do
+    begin
 
-    sArquivoTXT  := 'RELATORIO_' + sARQUIVO_ORIGEM_BANCO + '_' + sDTA_REFERENCIA + '.CSV';
+      sARQUIVO_ORIGEM_BANCO := Trim(__queryMySQL_processamento__.FieldByName('ARQUIVO_ORIGEM_BANCO').AsString);
+      sDTA_REFERENCIA       := Trim(__queryMySQL_processamento__.FieldByName('DTA_REFERENCIA').AsString);
 
-    AssignFile(txtSaida, sPathMovimentoArquivos + sArquivoTXT);
-    Rewrite(txtSaida);
+      sArquivoTXT  := 'RELATORIO_' + sARQUIVO_ORIGEM_BANCO + '_' + sDTA_REFERENCIA + '.CSV';
 
-    sLinha := '"N_CONTRATO"'
-           + ';"N_CHASSI"'
-           + ';"CPF/CNPJ CLIENTE"'
-           + ';"NOME CLIENTE"'
-           + ';"VALOR CARNE"'
-           + ';"QTD PARCELAS"'
-           + ';"DT VENCIMENTO"'
-           + ';"STATUS"'
-           + ';"CODIGO POSTAGEM CORREIOS"'
-           + ';"ENDEREÇO"'
-           + ';"BAIRRO"'
-           + ';"CIDADE"'
-           + ';"UF"'
-           + ';"CEP"'
-           + ';"ARQUIVO"'
-           + ';"DTA_REFERENCIA"'
-           ;
-    writeln(txtSaida, sLinha);
+      AssignFile(txtSaida, sPathMovimentoArquivos + sArquivoTXT);
+      Rewrite(txtSaida);
 
-    //=======================================================================================================================================
-    //  CRIA SAÍDA DO RELATÓRIO DIÁRIO DETALHES
-    //=======================================================================================================================================
-    sComando := ' SELECT *  FROM ' + objParametrosDeEntrada.TABELA_PROCESSAMENTO
-              + ' WHERE ARQUIVO_ORIGEM_BANCO = "' + sARQUIVO_ORIGEM_BANCO + '" '
-              + '   AND DTA_REFERENCIA       = "' + sDTA_REFERENCIA + '"';
-    objConexao.Executar_SQL(__queryMySQL_processamento2__, sComando, 2);
-
-    WHILE NOT __queryMySQL_processamento2__.Eof DO
-    BEGIN
-
-      sLinha := '"' + __queryMySQL_processamento2__.FieldByName('N_CONTRATO').AsString
-            + '";"' + __queryMySQL_processamento2__.FieldByName('N_CHASSI').AsString
-            + '";"' + __queryMySQL_processamento2__.FieldByName('CPF_CNPJ_CLIENTE').AsString
-            + '";"' + __queryMySQL_processamento2__.FieldByName('NOME_CLIENTE').AsString
-            + '";"' + __queryMySQL_processamento2__.FieldByName('VALOR_CARNE').AsString
-            + '";"' + __queryMySQL_processamento2__.FieldByName('QTD_PARCELAS').AsString
-            + '";"' + __queryMySQL_processamento2__.FieldByName('DT_VENCIMENTO').AsString
-            + '";"' + __queryMySQL_processamento2__.FieldByName('STATUS').AsString
-            + '";"' + __queryMySQL_processamento2__.FieldByName('CODIGO_POSTAGEM_CORREIOS').AsString
-            + '";"' + __queryMySQL_processamento2__.FieldByName('ENDERECO').AsString
-            + '";"' + __queryMySQL_processamento2__.FieldByName('BAIRRO').AsString
-            + '";"' + __queryMySQL_processamento2__.FieldByName('CIDADE').AsString
-            + '";"' + __queryMySQL_processamento2__.FieldByName('UF').AsString
-            + '";"' + __queryMySQL_processamento2__.FieldByName('CEP').AsString
-            + '";"' + __queryMySQL_processamento2__.FieldByName('ARQUIVO_ORIGEM_BANCO').AsString
-            + '";"' + __queryMySQL_processamento2__.FieldByName('DTA_REFERENCIA').AsString
-            +   '"';
-
+      sLinha := '"N_CONTRATO"'
+             + ';"N_CHASSI"'
+             + ';"CPF/CNPJ CLIENTE"'
+             + ';"NOME CLIENTE"'
+             + ';"VALOR CARNE"'
+             + ';"QTD PARCELAS"'
+             + ';"DT VENCIMENTO"'
+             + ';"STATUS"'
+             + ';"CODIGO POSTAGEM CORREIOS"'
+             + ';"ENDEREÇO"'
+             + ';"BAIRRO"'
+             + ';"CIDADE"'
+             + ';"UF"'
+             + ';"CEP"'
+             + ';"ARQUIVO"'
+             + ';"DTA_REFERENCIA"'
+             ;
       writeln(txtSaida, sLinha);
 
-      __queryMySQL_processamento2__.Next;
-    END;
+      //=======================================================================================================================================
+      //  CRIA SAÍDA DO RELATÓRIO DIÁRIO DETALHES
+      //=======================================================================================================================================
+      sComando := ' SELECT *  FROM ' + objParametrosDeEntrada.TABELA_PROCESSAMENTO
+                + ' WHERE ARQUIVO_ORIGEM_BANCO = "' + sARQUIVO_ORIGEM_BANCO + '" '
+                + '   AND DTA_REFERENCIA       = "' + sDTA_REFERENCIA + '"';
+      objConexao.Executar_SQL(__queryMySQL_processamento2__, sComando, 2);
 
-    CloseFile(txtSaida);
+      WHILE NOT __queryMySQL_processamento2__.Eof DO
+      BEGIN
+
+        sLinha := '"' + __queryMySQL_processamento2__.FieldByName('N_CONTRATO').AsString
+              + '";"' + __queryMySQL_processamento2__.FieldByName('N_CHASSI').AsString
+              + '";"' + __queryMySQL_processamento2__.FieldByName('CPF_CNPJ_CLIENTE').AsString
+              + '";"' + __queryMySQL_processamento2__.FieldByName('NOME_CLIENTE').AsString
+              + '";"' + __queryMySQL_processamento2__.FieldByName('VALOR_CARNE').AsString
+              + '";"' + __queryMySQL_processamento2__.FieldByName('QTD_PARCELAS').AsString
+              + '";"' + __queryMySQL_processamento2__.FieldByName('DT_VENCIMENTO').AsString
+              + '";"' + __queryMySQL_processamento2__.FieldByName('STATUS').AsString
+              + '";"' + __queryMySQL_processamento2__.FieldByName('CODIGO_POSTAGEM_CORREIOS').AsString
+              + '";"' + __queryMySQL_processamento2__.FieldByName('ENDERECO').AsString
+              + '";"' + __queryMySQL_processamento2__.FieldByName('BAIRRO').AsString
+              + '";"' + __queryMySQL_processamento2__.FieldByName('CIDADE').AsString
+              + '";"' + __queryMySQL_processamento2__.FieldByName('UF').AsString
+              + '";"' + __queryMySQL_processamento2__.FieldByName('CEP').AsString
+              + '";"' + __queryMySQL_processamento2__.FieldByName('ARQUIVO_ORIGEM_BANCO').AsString
+              + '";"' + __queryMySQL_processamento2__.FieldByName('DTA_REFERENCIA').AsString
+              +   '"';
+
+        writeln(txtSaida, sLinha);
+
+        __queryMySQL_processamento2__.Next;
+      END;
+
+      CloseFile(txtSaida);
+
+      __queryMySQL_processamento__.Next;
+
+    end;
+
   END;
   //=======================================================================================================================================
 

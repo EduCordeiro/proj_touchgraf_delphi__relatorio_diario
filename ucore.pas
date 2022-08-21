@@ -1309,10 +1309,10 @@ begin
 
 
   //=======================================================================================================================================
-  //  CRIA SAÍDA DO RELATÓRIO DIÁRIO [ <> IMPRESSAO/PDF]
+  //  CRIA SAÍDA DO RELATÓRIO DIÁRIO COM TUDO
   //=======================================================================================================================================
   sComando := ' SELECT ARQUIVO_ORIGEM_BANCO, DTA_REFERENCIA  FROM ' + objParametrosDeEntrada.TABELA_PROCESSAMENTO
-            + ' WHERE STATUS <> "IMPRESSAO/PDF" '
+            //+ ' WHERE STATUS <> "IMPRESSAO/PDF" '
             + ' GROUP BY DTA_REFERENCIA ';
   objConexao.Executar_SQL(__queryMySQL_processamento__, sComando, 2);
 
@@ -1356,8 +1356,10 @@ begin
       //  CRIA SAÍDA DO RELATÓRIO DIÁRIO DETALHES
       //=======================================================================================================================================
       sComando := ' SELECT *  FROM ' + objParametrosDeEntrada.TABELA_PROCESSAMENTO
-                + ' WHERE STATUS              <> "IMPRESSAO/PDF" '
-                + '   AND DTA_REFERENCIA       = "' + sDTA_REFERENCIA + '"';
+                //+ ' WHERE STATUS              <> "IMPRESSAO/PDF" '
+                //+ '   AND DTA_REFERENCIA       = "' + sDTA_REFERENCIA + '"';
+                + ' WHERE DTA_REFERENCIA       = "' + sDTA_REFERENCIA + '"';
+
       objConexao.Executar_SQL(__queryMySQL_processamento2__, sComando, 2);
 
       WHILE NOT __queryMySQL_processamento2__.Eof DO

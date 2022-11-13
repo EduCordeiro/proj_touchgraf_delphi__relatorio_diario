@@ -22,6 +22,7 @@ type
 
     __queryMySQL_processamento__    : TZQuery;
     __queryMySQL_processamento2__   : TZQuery;
+    __queryMySQL_Update__           : TZQuery;
     __queryMySQL_Insert_            : TZQuery;
     __queryMySQL_plano_de_triagem__ : TZQuery;
 
@@ -1131,6 +1132,7 @@ begin
                    + ' ,CEP'
                    + ' ,ARQUIVO_ORIGEM_BANCO'
                    + ' ,DTA_REFERENCIA'
+                   + ' ,CIF'
                    + ') '
                    + ' VALUES("' + IntToStr(iContLinas)
                          + '","' + Trim(copy(__queryMySQL_processamento__.FieldByName('LINHA').AsString, 0020, 016))
@@ -1149,6 +1151,7 @@ begin
                          + '","' + Trim(copy(__queryMySQL_processamento__.FieldByName('LINHA').AsString, 0870, 008))
                          + '","' + Trim(copy(__queryMySQL_processamento__.FieldByName('LINHA').AsString, 2034, 013))
                          + '","' + __queryMySQL_processamento__.FieldByName('MOVIMENTO').AsString
+                         + '","' + __queryMySQL_processamento__.FieldByName('CIF').AsString
                          + '")';
         objConexao.Executar_SQL(__queryMySQL_Insert_, sComando, 1);
 
@@ -1180,7 +1183,6 @@ begin
                      + ',PAPEL'
                      + ',TIPO_DOCUMENTO'
                      + ',LINHA'
-                     + ',LINHA_REL'
                      + ') '
                      + ' VALUES("'
                      +         __queryMySQL_processamento__.FieldByName('ARQUIVO_ZIP').AsString
@@ -1205,7 +1207,6 @@ begin
                      + '","' + __queryMySQL_processamento__.FieldByName('PAPEL').AsString
                      + '","' + __queryMySQL_processamento__.FieldByName('TIPO_DOCUMENTO').AsString
                      + '","' + __queryMySQL_processamento__.FieldByName('LINHA').AsString
-                     + '","' + sLinha
                      + '")'
                      ;
           objConexao.Executar_SQL(__queryMySQL_Insert_, sComando, 1);
@@ -1296,6 +1297,21 @@ begin
 
         writeln(txtSaida, sLinha);
 
+        //=================================================================
+        //  ATUALIZANDO A LINHA DO RELATÓRIO NA TABELA DE HISTÓRICO
+        //=================================================================
+        if not objParametrosDeEntrada.TESTE then
+        begin
+
+          sComando := ' UPDATE ' + objParametrosDeEntrada.TABELA_TRACK_LINE
+                    + ' SET LINHA_REL = "' + StringReplace(sLinha, '"', '\"', [rfReplaceAll, rfIgnoreCase]) + '"'
+                    + ' WHERE CIF = "' + __queryMySQL_processamento2__.FieldByName('CIF').AsString + '"';
+
+          objConexao.Executar_SQL(__queryMySQL_Update__, sComando, 1);
+
+        END;
+        //=================================================================
+
         __queryMySQL_processamento2__.Next;
       END;
 
@@ -1384,6 +1400,21 @@ begin
               +   '"';
 
         writeln(txtSaida, sLinha);
+
+        //=================================================================
+        //  ATUALIZANDO A LINHA DO RELATÓRIO NA TABELA DE HISTÓRICO
+        //=================================================================
+        if not objParametrosDeEntrada.TESTE then
+        begin
+
+          sComando := ' UPDATE ' + objParametrosDeEntrada.TABELA_TRACK_LINE
+                    + ' SET LINHA_REL = "' + StringReplace(sLinha, '"', '\"', [rfReplaceAll, rfIgnoreCase]) + '"'
+                    + ' WHERE CIF = "' + __queryMySQL_processamento2__.FieldByName('CIF').AsString + '"';
+
+          objConexao.Executar_SQL(__queryMySQL_Update__, sComando, 1);
+
+        END;
+        //=================================================================        
 
         __queryMySQL_processamento2__.Next;
       END;

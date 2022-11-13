@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS proj_touchgraf_delphi__relatorio_diario.processamento
   ,CEP                        varchar(008) NOT NULL
   ,ARQUIVO_ORIGEM_BANCO       varchar(013) NOT NULL
   ,DTA_REFERENCIA             varchar(008) NOT NULL
+  ,CIF                        VARCHAR(34) NOT NULL
   ,PRIMARY KEY(SEQUENCIA),
   KEY IDX_CHAVE2 (ARQUIVO_ORIGEM_BANCO, DTA_REFERENCIA)
 );

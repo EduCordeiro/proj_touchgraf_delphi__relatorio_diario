@@ -982,6 +982,9 @@ var
   sCategoria                        : string;
   sPorte                            : string;
   sCep                              : string;
+  sCidade                           : string;
+  sUF                               : string;
+  position                          : Integer;
 
   sProdutoCarne                     : string;
   iStatusCodigo                     : Integer;
@@ -1095,6 +1098,9 @@ begin
       //  INSERE NA TABELA PROCESSAMENTO
       //=================================================================================================================================================================
 
+      //==========================================
+      // SAFRA - CARNE
+      //==========================================
       if sTipoDocumento = 'CARNE' then
       begin
 
@@ -1113,6 +1119,14 @@ begin
 
         if (iStatusCodigo = 2) or (iStatusCodigo = 3) or (iStatusCodigo = 4) then
           sStatusLabel := 'CEP INCONSISTENTE';
+
+        //==================================================================================================================
+        // LIMPA FORMATAÇÃO CEP
+        //==================================================================================================================
+        sCep := Trim(copy(__queryMySQL_processamento__.FieldByName('LINHA').AsString, 0870, 008));
+        sCep := StringReplace(sCep, '-', '', [rfReplaceAll, rfIgnoreCase]);
+        sCep := StringReplace(sCep, ' ', '', [rfReplaceAll, rfIgnoreCase]);
+        //==================================================================================================================
 
         sComando := 'INSERT INTO  ' + objParametrosDeEntrada.TABELA_PROCESSAMENTO
                    + ' (SEQUENCIA'
@@ -1148,11 +1162,159 @@ begin
                          + '","' + Trim(copy(__queryMySQL_processamento__.FieldByName('LINHA').AsString, 0808, 030))
                          + '","' + Trim(copy(__queryMySQL_processamento__.FieldByName('LINHA').AsString, 0838, 030))
                          + '","' + Trim(copy(__queryMySQL_processamento__.FieldByName('LINHA').AsString, 0868, 002))
-                         + '","' + Trim(copy(__queryMySQL_processamento__.FieldByName('LINHA').AsString, 0870, 008))
+                         + '","' + sCep
                          + '","' + Trim(copy(__queryMySQL_processamento__.FieldByName('LINHA').AsString, 2034, 013))
                          + '","' + __queryMySQL_processamento__.FieldByName('MOVIMENTO').AsString
                          + '","' + __queryMySQL_processamento__.FieldByName('CIF').AsString
                          + '")';
+        objConexao.Executar_SQL(__queryMySQL_Insert_, sComando, 1);
+
+        //=================================================================================================================================================================
+        //  INSERE NA TABELA TRACK LINE
+        //=================================================================================================================================================================
+        if not objParametrosDeEntrada.TESTE then
+        begin
+          sComando := 'INSERT INTO  ' + objParametrosDeEntrada.TABELA_TRACK_LINE
+                    + ' (ARQUIVO_ZIP'
+                     + ',ARQUIVO_AFP'
+                     + ',ARQUIVO_TXT'
+                     + ',SEQUENCIA_REGISTRO'
+                     + ',TIMESTAMP'
+                     + ',LOTE_PROCESSAMENTO'
+                     + ',MOVIMENTO'
+                     + ',ACABAMENTO'
+                     + ',PAGINAS'
+                     + ',FOLHAS'
+                     + ',OF_FORMULARIO'
+                     + ',DATA_POSTAGEM'
+                     + ',LOTE'
+                     + ',CIF'
+                     + ',PESO'
+                     + ',DIRECAO'
+                     + ',CATEGORIA'
+                     + ',PORTE'
+                     + ',STATUS_REGISTRO'
+                     + ',PAPEL'
+                     + ',TIPO_DOCUMENTO'
+                     + ',LINHA'
+                     + ') '
+                     + ' VALUES("'
+                     +         __queryMySQL_processamento__.FieldByName('ARQUIVO_ZIP').AsString
+                     + '","' + __queryMySQL_processamento__.FieldByName('ARQUIVO_AFP').AsString
+                     + '","' + __queryMySQL_processamento__.FieldByName('ARQUIVO_TXT').AsString
+                     + '","' + __queryMySQL_processamento__.FieldByName('SEQUENCIA_REGISTRO').AsString
+                     + '","' + FormatDateTime('YYYY-MM-DD hh:mm:ss', objParametrosDeEntrada.TIMESTAMP)
+                     + '","' + __queryMySQL_processamento__.FieldByName('LOTE_PROCESSAMENTO').AsString
+                     + '","' + __queryMySQL_processamento__.FieldByName('MOVIMENTO').AsString
+                     + '","' + __queryMySQL_processamento__.FieldByName('ACABAMENTO').AsString
+                     + '","' + __queryMySQL_processamento__.FieldByName('PAGINAS').AsString
+                     + '","' + __queryMySQL_processamento__.FieldByName('FOLHAS').AsString
+                     + '","' + __queryMySQL_processamento__.FieldByName('OF_FORMULARIO').AsString
+                     + '","' + __queryMySQL_processamento__.FieldByName('DATA_POSTAGEM').AsString
+                     + '","' + __queryMySQL_processamento__.FieldByName('LOTE').AsString
+                     + '","' + __queryMySQL_processamento__.FieldByName('CIF').AsString
+                     + '","' + __queryMySQL_processamento__.FieldByName('PESO').AsString
+                     + '","' + __queryMySQL_processamento__.FieldByName('DIRECAO').AsString
+                     + '","' + __queryMySQL_processamento__.FieldByName('CATEGORIA').AsString
+                     + '","' + __queryMySQL_processamento__.FieldByName('PORTE').AsString
+                     + '","' + __queryMySQL_processamento__.FieldByName('STATUS_REGISTRO').AsString
+                     + '","' + __queryMySQL_processamento__.FieldByName('PAPEL').AsString
+                     + '","' + __queryMySQL_processamento__.FieldByName('TIPO_DOCUMENTO').AsString
+                     + '","' + __queryMySQL_processamento__.FieldByName('LINHA').AsString
+                     + '")'
+                     ;
+          objConexao.Executar_SQL(__queryMySQL_Insert_, sComando, 1);
+
+        END;
+
+      end;
+
+      //==========================================
+      // SAFRA - BACEN
+      //==========================================
+      if sTipoDocumento = 'BACEN' then
+      begin
+
+        sProdutoCarne := ''; // REGRA CARNE
+
+        sStatusCodigo := __queryMySQL_processamento__.FieldByName('STATUS_REGISTRO').AsString;
+
+        sStatusLabel  := ''; // REGRA CARNE
+        iStatusCodigo := StrToIntDef(sStatusCodigo, 0);
+
+        // REGRA CARNE
+        //if sProdutoCarne = '120' then
+        //  sStatusLabel  := 'IMPRESSAO/PDF';
+
+        if iStatusCodigo = 5 then
+          sStatusLabel := 'RETENÇÃO';
+
+        if (iStatusCodigo = 2) or (iStatusCodigo = 3) or (iStatusCodigo = 4) then
+          sStatusLabel := 'CEP INCONSISTENTE';
+
+        //==================================================================================================================
+        // LIMPA FORMATAÇÃO CEP
+        //==================================================================================================================
+        sCep := Trim(objString.getTermo(7, ';', (__queryMySQL_processamento__.FieldByName('LINHA').AsString)));
+        sCep := StringReplace(sCep, '-', '', [rfReplaceAll, rfIgnoreCase]);
+        sCep := StringReplace(sCep, ' ', '', [rfReplaceAll, rfIgnoreCase]);
+        //==================================================================================================================
+
+        //==================================================================================================================
+        // OBTENDO UF CONTIDO NO CAMPO CIDADE
+        //==================================================================================================================
+        sCidade := '';
+        sUF     := '';
+
+        sCidade  := Trim(objString.getTermo(6, ';', (__queryMySQL_processamento__.FieldByName('LINHA').AsString)));
+        position := LastDelimiter(' - ', sCidade);
+
+        sUF      := Trim(copy(sCidade, position +1, 2));
+        sCidade  := Trim(copy(sCidade, 1, position -2));
+
+        if (length(sUF) <= 0) and (trim(sCidade) = '') then
+          sCidade := Trim(objString.getTermo(6, ';', (__queryMySQL_processamento__.FieldByName('LINHA').AsString)));
+        //==================================================================================================================
+
+        sComando := 'INSERT INTO  ' + objParametrosDeEntrada.TABELA_PROCESSAMENTO
+                  + ' (SEQUENCIA'
+                  + ' ,N_CONTRATO'
+                  + ' ,N_CHASSI'
+                  + ' ,CPF_CNPJ_CLIENTE'
+                  + ' ,NOME_CLIENTE'
+                  + ' ,VALOR_CARNE'
+                  + ' ,QTD_PARCELAS'
+                  + ' ,DT_VENCIMENTO'
+                  + ' ,STATUS'
+                  + ' ,CODIGO_POSTAGEM_CORREIOS'
+                  + ' ,ENDERECO'
+                  + ' ,BAIRRO'
+                  + ' ,CIDADE'
+                  + ' ,UF'
+                  + ' ,CEP'
+                  + ' ,ARQUIVO_ORIGEM_BANCO'
+                  + ' ,DTA_REFERENCIA'
+                  + ' ,CIF'
+                  + ') '
+                  + ' VALUES("' + IntToStr(iContLinas)
+                        + '","' + ''
+                        + '","' + ''
+                        + '","' + ''
+                        + '","' + Trim(objString.getTermo(3, ';', (__queryMySQL_processamento__.FieldByName('LINHA').AsString)))
+                        + '","' + ''
+                        + '","' + ''
+                        + '","' + ''
+                        + '","' + sStatusLabel
+                        + '","' + __queryMySQL_processamento__.FieldByName('CIF').AsString
+                        + '","' + Trim(objString.getTermo(4, ';', (__queryMySQL_processamento__.FieldByName('LINHA').AsString)))
+                        + '","' + Trim(objString.getTermo(5, ';', (__queryMySQL_processamento__.FieldByName('LINHA').AsString)))
+                        + '","' + sCidade
+                        + '","' + sUF
+                        + '","' + sCep
+                        + '","' + __queryMySQL_processamento__.FieldByName('ARQUIVO_TXT').AsString
+                        + '","' + __queryMySQL_processamento__.FieldByName('MOVIMENTO').AsString
+                        + '","' + __queryMySQL_processamento__.FieldByName('CIF').AsString
+                        + '")';
         objConexao.Executar_SQL(__queryMySQL_Insert_, sComando, 1);
 
         //=================================================================================================================================================================
